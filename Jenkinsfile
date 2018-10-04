@@ -34,7 +34,7 @@ pipeline {
 			)
             }
         }
-		Stage('Validation') {
+		stage('Validation') {
 			agent any
 			steps {
 				sh 'curl -I 172.22.177.51:80 > node1.json'
@@ -58,7 +58,7 @@ pipeline {
 
         stage('Destroy containers') {
             agent any
-        steps {
+            steps {
 			sh 'docker kill $(docker ps -aq) '
         }
   }
