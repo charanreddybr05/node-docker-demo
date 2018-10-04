@@ -50,10 +50,10 @@ pipeline {
 			steps {
 				sh 'curl -I 172.22.177.51:81 > node2.json'
 				def OUTPUT = sh 'cat node2.json | grep 200'
-				if ("${OUTPUT}" == "200" ) {
-					echo "Couldn't access tha application"
-					sh 'exit 1'
-				}
+				//if ("${OUTPUT}" == "200" ) {
+				//	echo "Couldn't access tha application"
+				//	sh 'exit 1'
+				//}
 				
 			}
 		}
