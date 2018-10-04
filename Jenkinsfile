@@ -6,7 +6,7 @@ pipeline {
                 checkout scm
             }
 			steps {
-			docker build -t nodejs:v1 .
+			sh 'docker build -t nodejs:v1 .'
 			}
         }
         stage('NodeJs Build') {
@@ -14,10 +14,10 @@ pipeline {
             steps {
                 parallel(
 					a: {
-					  docker run --rm -p 3000:3000 -d -v $(pwd)/app:/src/app -v $(pwd)/public:/src/public --link nd-db --name nd-app1 node-docker
+					  sh 'docker run --rm -p 3000:3000 -d -v $(pwd)/app:/src/app -v $(pwd)/public:/src/public --link nd-db --name nd-app1 node-docker'
 					},
 					b: {
-					  docker run --rm -p 3001:3000 -d -v $(pwd)/app:/src/app -v $(pwd)/public:/src/public --link nd-db --name nd-app2 node-docker
+					  sh 'docker run --rm -p 3001:3000 -d -v $(pwd)/app:/src/app -v $(pwd)/public:/src/public --link nd-db --name nd-app2 node-docker'
 					}
             }
         }
@@ -27,10 +27,10 @@ pipeline {
             steps {
                 parallel(
 					a: {
-					  docker run --name docker-nginx1 -p 81:80 -d -v ~/nginx.conf:/etc/nginx/conf/nginx.conf nginx
+					  sh 'docker run --name docker-nginx1 -p 81:80 -d -v ~/nginx.conf:/etc/nginx/conf/nginx.conf nginx'
 					},
 					b: {
-					  docker run --name docker-nginx1 -p 82:80 -d -v ~/nginx.conf:/etc/nginx/conf/nginx.conf nginx
+					  sh 'docker run --name docker-nginx1 -p 82:80 -d -v ~/nginx.conf:/etc/nginx/conf/nginx.conf nginx'
 					}
             }
         }
