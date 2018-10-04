@@ -5,49 +5,61 @@ pipeline {
             steps {
                 checkout scm
             }
+			steps {
+			docker build -t nodejs:v1 .
+			}
         }
         stage('NodeJs Build') {
             agent {
-            docker {
-                image 'maven:3-alpine'
-                args '-v /root/.m2:/root/.m2'
-                }
-            }
             steps {
-                sh 'mvn -B -DskipTests clean package'
+                parallel(
+					a: {
+					  docker run --rm -p 3000:3000 -d -v $(pwd)/app:/src/app -v $(pwd)/public:/src/public --link nd-db --name nd-app1 node-docker
+					},
+					b: {
+					  docker run --rm -p 3001:3000 -d -v $(pwd)/app:/src/app -v $(pwd)/public:/src/public --link nd-db --name nd-app2 node-docker
+					}
             }
         }
-        stage('Building image') {
+		}
+        stage('Creating Nginx') {
             agent any
             steps {
-                script {
-                dockerImage = docker.build registry + ":$BUILD_NUMBER"
-                }
+                parallel(
+					a: {
+					  docker run --name docker-nginx1 -p 81:80 -d -v ~/nginx.conf:/etc/nginx/conf/nginx.conf nginx
+					},
+					b: {
+					  docker run --name docker-nginx1 -p 82:80 -d -v ~/nginx.conf:/etc/nginx/conf/nginx.conf nginx
+					}
             }
         }
-        stage('Push image') {
-            agent any
-            steps {
-                //script {
-                //docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
-                //app.push("${env.BUILD_NUMBER}")
-                //app.push("latest")
-                //}
-                //}
-                script {
-                    docker.withRegistry( '', registryCredential ) {
-                    dockerImage.push()
-                    }
-      }
-        }
-        }
-        stage('Deploy Kubernetes') {
+		Stage('Validation') {
+			agent any
+			steps {
+				sh 'curl -I 172.22.177.51:80 > node1.json'
+				def OUTPUT = cat node1.json | grep 200
+				if ( -z "${OUTPUT}"){
+					echo "Couldn't access tha application"
+					sh 'exit 1'
+				}
+				
+			}
+			steps {
+				sh 'curl -I 172.22.177.51:81 > node2.json'
+				def OUTPUT = cat node2.json | grep 200
+				if ( -z "${OUTPUT}"){
+					echo "Couldn't access tha application"
+					sh 'exit 1'
+				}
+				
+			}
+		}
+
+        stage('Destroy containers') {
             agent any
         steps {
-        sh 'kubectl create -f tomcat-rc.yaml --VERSION=${BUILD_NUMBER}'
-        sh 'kubectl create -f tomcat-svc.yaml'
-//        sh 'scp tomcat-rc.yaml root@server: &&  ssh root@server kubectl create -f tomcat-rc.yaml --VERSION=${BUILD_NUMBER}'
-//        sh 'scp tomcat-svc.yaml root@server: &&  ssh root@server kubectl create -f tomcat-svc.yaml'
+			sh 'docker kill $(docker ps -aq) '
         }
   }
 }
