@@ -4,11 +4,9 @@ pipeline {
             agent any
             steps {
                 checkout scm
+		sh 'docker build -t nodejs:v1 .'
             }
-			steps {
-			sh 'docker build -t nodejs:v1 .'
-			}
-        }
+	 }
         stage('NodeJs Build') {
             agent {
             steps {
