@@ -19,6 +19,7 @@ pipeline {
 					b: {
 					  sh 'docker run --rm -p 3001:3000 -d -v $(pwd)/app:/src/app -v $(pwd)/public:/src/public --link nd-db --name nd-app2 node-docker'
 					}
+			)
             }
         }
 		}
@@ -32,6 +33,7 @@ pipeline {
 					b: {
 					  sh 'docker run --name docker-nginx1 -p 82:80 -d -v ~/nginx.conf:/etc/nginx/conf/nginx.conf nginx'
 					}
+			)
             }
         }
 		Stage('Validation') {
